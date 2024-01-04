@@ -5,6 +5,10 @@ import { adaptRoute } from '@/main/adapters/express-route-adapter';
 import { makeListUsersController } from '@/main/factories/make-list-users-controller';
 import { makeCreateUserController } from '@/main/factories/make-create-user-controller';
 import { makeCreateCandidateController } from '@/main/factories/make-create-candidate-controller';
+// import { makeRentBikeController } from '@/main/factories/make-rent-bike-controller';
+import { makeAuthenticateUserController } from '../factories/make-authenticate-user.controller';
+import { makeGetUserByTokenController } from '../factories/make-get-user-by-token.controller';
+import { verifyToken } from '../middleware';
 
 export function setupRoutes(app: Express): void {
   const router = Router();
@@ -14,6 +18,9 @@ export function setupRoutes(app: Express): void {
   createListUsersRoute(router);
   createCreateUserRoute(router);
   createCreateCandidateRoute(router);
+  // createRentBikeRoute(router);
+  authenticateUserRoute(router);
+  getUserByToken(router);
 }
 
 function createListBikesRoute(router: Router) {
@@ -34,4 +41,16 @@ function createCreateUserRoute(router: Router) {
 
 function createCreateCandidateRoute(router: Router) {
   router.post('/candidates', adaptRoute(makeCreateCandidateController()));
+}
+
+/* function createRentBikeRoute(router: Router) {
+  router.post('/bikes/rent', adaptRoute(makeRentBikeController()));
+} */
+
+function authenticateUserRoute(router: Router) {
+  router.post('/users/authenticate', adaptRoute(makeAuthenticateUserController()));
+}
+
+function getUserByToken(router: Router) {
+  router.get('/users/me', verifyToken, adaptRoute(makeGetUserByTokenController()));
 }

@@ -4,6 +4,7 @@ import { User } from '@/usecases/datatypes/user';
 import { ExistingUserError } from '@/usecases/errors/existing-user-error';
 import { CandidateRepository } from '@/usecases/ports/candidate-repository';
 import { UnauthorizedError } from '@/usecases/errors/unauthorized-error';
+import { hash } from 'bcryptjs';
 
 export class CreateUser implements UseCase {
   constructor(
@@ -12,12 +13,18 @@ export class CreateUser implements UseCase {
   ) {}
 
   async perform(user: User, candidateToken: string): Promise<User> {
-    const candidate = await this.candidateRepository.findByToken(candidateToken);
-    if (!candidate) throw new UnauthorizedError();
+    try {
+      const candidate = await this.candidateRepository.findByToken(candidateToken);
+      if (!candidate) throw new UnauthorizedError();
+  
+      const existingUser = await this.userRepository.findByEmail(user.email, candidate.id);
+      if (existingUser) throw new ExistingUserError(user.email);
 
-    const existingUser = await this.userRepository.findByEmail(user.email, candidate.id);
-    if (existingUser) throw new ExistingUserError(user.email);
-
-    return await this.userRepository.add({ ...user, candidateId: candidate.id });
+      const hashedPassword = await hash(user.password, 8);
+  
+      return await this.userRepository.add({ ...user, candidateId: candidate.id, password: hashedPassword });
+    } catch (error: any) {
+      console.log({ error })
+    }
   }
 }
